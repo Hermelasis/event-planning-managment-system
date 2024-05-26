@@ -255,3 +255,71 @@ void view_events(string username)
         book_event(username, choice);
     }
 }
+// Function to search for an event by name
+void search_event(string &username)
+{
+    string name;
+    cout << "Enter event name to search: ";
+    cin.ignore();
+    getline(cin, name);
+
+    string query = "SELECT * FROM events WHERE name LIKE '%" + name + "%'"; // Filtering out the name the user inserted
+    if (mysql_query(conn, query.c_str()))
+    {
+        cout << "Failed to search events: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    res = mysql_store_result(conn); // Store the result set
+    if (res == NULL)
+    {
+        cout << "Failed Because: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    cout << "Id" << "\t" << "Name" << "\t" << "Date" << "\t\t" << "Price" << "\t" << "Max" << "\t" << "current_capacity" << endl;
+    int num_fields = mysql_num_fields(res);
+    while ((row = mysql_fetch_row(res)))
+    {
+        for (int i = 0; i < num_fields; i++)
+        {
+            cout << row[i] << "\t";
+        }
+        cout << endl;
+    }
+
+    int choice;
+    cout << "1. Book Event"<< endl;
+    cout << "2. Go Back" << endl;
+    cout << "Enter your choice: ";
+    cin >> choice;
+
+    if (choice == 1)
+    {
+        int event_id;
+        cout << "Enter event ID to book: ";
+        cin >> event_id;
+        book_event(username, event_id);
+    }
+    else
+    {
+        user_dashboard(username);
+    }
+}
+
+// Function to book an event by its ID
+void book_event(string username, int event_id)
+{
+    string query = "SELECT * FROM events WHERE id = " + string_to_int(event_id); // selecting the specifc event to check its max and curr capacity
+    if (mysql_query(conn, query.c_str()))
+    { 
+        cout << "Failed to retrieve event beacause: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    res = mysql_store_result(conn); // Store the result set
+    if (res == NULL)
+    {
+        cout << "Failed to the the data beacause: " << mysql_error(conn) << endl;
+        return;
+}
