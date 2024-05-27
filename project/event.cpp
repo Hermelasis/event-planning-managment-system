@@ -323,3 +323,139 @@ void book_event(string username, int event_id)
         cout << "Failed to the the data beacause: " << mysql_error(conn) << endl;
         return;
 }
+
+
+3,
+
+row = mysql_fetch_row(res);
+    int max_capacity = string_to_int(row[4]);
+    int current_capacity = string_to_int(row[5]);
+
+    if (current_capacity >= max_capacity)
+    {
+        cout << "Event is full!" << endl;
+        return;
+    }
+
+    query = "INSERT INTO registrations (user_id, event_id) VALUES ((SELECT id FROM users WHERE username = '" + username + "'), " + string_to_int(event_id) + ")"; // Inserting to registration table
+    if (mysql_query(conn, query.c_str()))
+    { 
+        cout << "Cannot Book twice with the same name becuase: " << mysql_error(conn) << endl;
+    }
+    else
+    {
+        query = "UPDATE events SET current_capacity = current_capacity + 1 WHERE id = " + string_to_int(event_id); // Updates the number of people when ever a new user books the event
+        if (mysql_query(conn, query.c_str()))
+        { 
+            cout << "Failed to update event capacity beacause: " << mysql_error(conn) << endl;
+        }
+        else
+        {
+            cout << "Event booked successfully!" << endl;
+        }
+    }
+}
+
+// Function to display the admin dashboard
+void admin_dashboard()
+{
+    int choice;
+    do
+    {
+        cout << "1. Post Event" << endl;
+        cout << "2. View Events with Registrations" << endl;
+        cout << "3. View Event Registrants" << endl;
+        cout << "4. Logout" << endl;
+
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+        case 1:
+            post_event();
+            break;
+        case 2:
+            view_events_with_registrations();
+            break;
+        case 3:
+            view_event_registrants();
+            break;
+        case 4:
+            break;
+        default:
+            cout << "Invalid choice!" << endl;
+        }
+    } while (choice != 4);
+}
+
+// Function to display the user dashboard
+void user_dashboard(string username)
+{
+    int choice;
+    do
+    {
+        cout << "1. View Available Events" << endl;
+        cout << "2. Search Event by Name" << endl;
+        cout << "3. Logout" << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+        case 1:
+            view_events(username);
+            break;
+        case 2:
+            search_event(username);
+            break;
+        case 3:
+            break;
+        default:
+            cout << "Invalid choice!" << endl;
+        }
+    } while (choice != 3);
+}
+
+// Function to view events with the number of registrations (admin only)
+void view_events_with_registrations()
+{
+    string query = "SELECT e.id, e.name, e.date, e.price, e.max_capacity, e.current_capacity FROM events e"; // Selecting from the events table
+    if (mysql_query(conn, query.c_str()))
+    { // Execute the query
+        cout << "Failed to retrieve events with registrations: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    res = mysql_store_result(conn); // Store the result set
+    if (res == NULL)
+    {
+        cout << "Failed beacause: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    int num_fields = mysql_num_fields(res);
+    cout << "Id" << "\t" << "Name" << "\t" << "Date" << "\t\t" << "Price" << "\t" << "Max" << "\t" << "current_capacity" << endl;
+    while ((row = mysql_fetch_row(res)))
+    {
+        for (int i = 0; i < num_fields; i++)
+        {
+            cout << row[i] << "\t";
+        }
+        cout << endl;
+    }
+}
+
+// Function to view the registrants of a specific event (admin only)
+void view_event_registrants()
+{
+    int event_id;
+    cout << "Enter event ID to view registrants: ";
+    cin >> event_id;
+
+    string query = "SELECT u.username FROM registrations r INNER JOIN users u ON r.user_id = u.id WHERE r.event_id = " + string_to_int(event_id); // Show the users who have booked and event with that given id
+    if (mysql_query(conn, query.c_str()))
+    {
+        cout << "Failed to retrieve event registrants: " << mysql_error(conn) << endl;
+        return;
+    }
