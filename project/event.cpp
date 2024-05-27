@@ -325,8 +325,6 @@ void book_event(string username, int event_id)
 }
 
 
-3,
-
 row = mysql_fetch_row(res);
     int max_capacity = string_to_int(row[4]);
     int current_capacity = string_to_int(row[5]);
@@ -459,3 +457,88 @@ void view_event_registrants()
         cout << "Failed to retrieve event registrants: " << mysql_error(conn) << endl;
         return;
     }
+
+res = mysql_store_result(conn); // Store the result set
+    if (res == NULL)
+    {
+        cout << "mysql_store_result() failed: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    while ((row = mysql_fetch_row(res)))
+    {
+        cout << row[0] << endl;
+    }
+}
+
+// Function to ensure the admin user is created
+void create_admin_user()
+{
+    string query = "INSERT IGNORE INTO users (username, password, is_admin) VALUES ('admin', 'admin', 1)"; // It doesnt matter if it exists or not it creates the admin every time
+    if (mysql_query(conn, query.c_str()))
+    {
+        cout << "Failed to create admin user: " << mysql_error(conn) << endl;
+    }
+}
+
+// Creating the database
+/* 
+
+SQL CODE:
+
+CREATE DATABASE event_organizer_final;
+
+USE event_organizer_final;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    is_admin BOOLEAN DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    date DATE NOT NULL,
+    price FLOAT NOT NULL,
+    max_capacity INT NOT NULL,
+    current_capacity INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS registrations (
+    user_id INT,
+    event_id INT,
+    PRIMARY KEY (user_id, event_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (event_id) REFERENCES events(id)
+);
+*/
+
+// This fuction excutes the above SQL code
+void create_db()
+{
+    string query3 = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) NOT NULL, password VARCHAR(50) NOT NULL, is_admin BOOLEAN DEFAULT 0 )";
+    
+    if (mysql_query(conn, query3.c_str()))
+    { 
+        cout << "Failed to retrieve events with registrations: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    string query4 = "CREATE TABLE IF NOT EXISTS events (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, date DATE NOT NULL, price FLOAT NOT NULL, max_capacity INT NOT NULL, current_capacity INT DEFAULT 0 )";
+
+    if (mysql_query(conn, query4.c_str()))
+    { 
+        cout << "Failed to retrieve events with registrations: " << mysql_error(conn) << endl;
+        return;
+    }
+
+    string query5 = "CREATE TABLE IF NOT EXISTS registrations (user_id INT, event_id INT, PRIMARY KEY (user_id, event_id), FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (event_id) REFERENCES events(id) )"; 
+    
+    if (mysql_query(conn, query5.c_str()))
+    { 
+        cout << "Failed to retrieve events with registrations: " << mysql_error(conn) << endl;
+        return;
+    }
+}
